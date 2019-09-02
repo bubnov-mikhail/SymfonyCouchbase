@@ -22,13 +22,10 @@ class CouchbaseExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
+        $container->setParameter('couchbase_bundle.url', $config['url']);
+        $container->setParameter('couchbase_bundle.buckets', $config['buckets']);
+
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-
-        $def = $container->getDefinition('couchbase_cluster');
-        $def->replaceArgument(0, $config['url']);
-        $def->replaceArgument(1, $config['cluster_password']);
-        $def = $container->getDefinition('couchbase');
-        $def->replaceArgument(3, $config['buckets']);
     }
 }

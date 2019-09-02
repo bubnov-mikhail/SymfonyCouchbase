@@ -30,6 +30,7 @@ class CouchbaseGenerateViewsCommand extends Command
      */
     public function __construct(Registry $registry, CouchbaseORM $couchbase)
     {
+        parent::__construct();
         $this->registry  = $registry;
         $this->couchbase = $couchbase;
     }

@@ -22,7 +22,6 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->variableNode('url')->defaultValue('localhost')->end()
-                ->variableNode('cluster_password')->defaultValue(null)->end()
                 ->arrayNode('buckets')
                     ->useAttributeAsKey('name')
                         ->prototype('array')

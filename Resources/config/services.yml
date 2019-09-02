@@ -2,8 +2,7 @@ services:
     couchbase_cluster:
         class: CouchbaseCluster
         arguments:
-            - url
-            - cluster_authorization
+            - '%couchbase_bundle.url%'
 
     couchbase_generate_views_command:
         class: Apperturedev\CouchbaseBundle\Command\CouchbaseGenerateViewsCommand
@@ -19,4 +18,4 @@ services:
             - "@couchbase_cluster"
             - "@doctrine.orm.entity_manager"
             - "@jms_serializer"
-            - bucket_array
+            - '%couchbase_bundle.buckets%'
