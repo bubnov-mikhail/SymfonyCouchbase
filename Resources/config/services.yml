@@ -1,12 +1,10 @@
 services:
     couchbase_cluster:
-        id: couchbase_cluster
         class: CouchbaseCluster
         arguments:
             - url
             - cluster_authorization
     couchbase:
-        id: couchbase
         class: Apperturedev\CouchbaseBundle\Classes\CouchbaseORM
         arguments:
             - "@couchbase_cluster"
