@@ -7,8 +7,9 @@ services:
 
     couchbase_generate_views_command:
         class: Apperturedev\CouchbaseBundle\Command\CouchbaseGenerateViewsCommand
-        calls:
-            - [ setContainer, [ "@service_container" ]]
+        arguments:
+            - '@doctrine'
+            - '@couchbase'
         tags:
             - {name: console.command}
 
