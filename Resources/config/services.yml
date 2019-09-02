@@ -4,6 +4,14 @@ services:
         arguments:
             - url
             - cluster_authorization
+
+    couchbase_generate_views_command:
+        class: Apperturedev\CouchbaseBundle\Command\CouchbaseGenerateViewsCommand
+        calls:
+            - [ setContainer, [ "@service_container" ]]
+        tags:
+            - {name: console.command}
+
     couchbase:
         class: Apperturedev\CouchbaseBundle\Classes\CouchbaseORM
         arguments:
