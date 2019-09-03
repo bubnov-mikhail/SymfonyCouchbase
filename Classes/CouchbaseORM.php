@@ -4,6 +4,7 @@ namespace Apperturedev\CouchbaseBundle\Classes;
 
 use CouchbaseCluster;
 use Doctrine\ORM\EntityManager;
+use JMS\Serializer\Exclusion\ExclusionStrategyInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 
@@ -34,6 +35,9 @@ class CouchbaseORM extends Functions
      */
     private $serializer;
 
+    /** @var ExclusionStrategyInterface */
+    private $exclusionStrategy;
+
     /**
      * @param CouchbaseCluster $em
      * @param EntityManager    $doctrine
@@ -44,16 +48,18 @@ class CouchbaseORM extends Functions
         CouchbaseCluster $em,
         EntityManager $doctrine,
         Serializer $serializer,
+        ExclusionStrategyInterface $exclusionStrategy,
+        $bucketName = 'default',
         array $buckets = null
     )
     {
-        $bucket         = $buckets['default']['bucket_name'] ?? null;
-        $bucketPassword = $buckets['default']['bucket_password'] ?? '';
-        $this->em       = $em->openBucket($bucket, $bucketPassword);
-        //$this->em->enableN1ql($Couchbase);
+        $bucket           = $buckets[$bucketName]['bucket_name'] ?? null;
+        $bucketPassword   = $buckets[$bucketName]['bucket_password'] ?? '';
+        $this->em         = $em->openBucket($bucket, $bucketPassword);
         $this->doctrine   = $doctrine;
         $this->serializer = $serializer;
         $this->setSerializer($serializer);
+        $this->exclusionStrategy = $exclusionStrategy;
     }
 
     /**
@@ -80,20 +86,20 @@ class CouchbaseORM extends Functions
      * Save the entity Object on Couchbase
      * If id is null create a new one and add automatically to the Entity Object.
      *
-     * @param Object $object
+     * @param string $class
      *
      * @return \Couchbase\Document|array
      *
      * @throws \Exception
      */
-    public function save($object)
+    public function save($class)
     {
-        $table = $this->doctrine->getClassMetadata(get_class($object))->getTableName();
-        if (null === $object->getId()) {
-            $this->setObjectId($object, $this->setNextId($object));
+        $table = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
+        if (null === $class->getId()) {
+            $this->setObjectId($class, $this->setNextId($class));
         }
-        $name            = $table . '_' . $object->getId();
-        $data            = $this->serializer->toArray($object, $this->getContext());
+        $name            = $table . '_' . $class->getId();
+        $data            = $this->serializer->toArray($class, $this->getContext());
         $data['doctype'] = $table;
         $debug           = $this->em->upsert($name, $data);
         if (null === $debug->error) {
@@ -146,7 +152,7 @@ class CouchbaseORM extends Functions
      */
     public function getLastId($class)
     {
-        $table   = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
+        $table = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
 
         try {
             $value = $this->em->get($table . '_id');
@@ -169,7 +175,7 @@ class CouchbaseORM extends Functions
      */
     private function setNextId($class)
     {
-        $table   = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
+        $table = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
 
         try {
             $getDoc = $this->em->get($table . '_id');
@@ -198,13 +204,13 @@ class CouchbaseORM extends Functions
      */
     private function setId($class, $save = false)
     {
-        $table   = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
+        $table = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
 
         try {
             $id = $this->em->get($table . '_id');
         } catch (\Exception $e) {
             $id    = ($save) ? 2 : 1;
-            $data = ['id' => $id];
+            $data  = ['id' => $id];
             $debug = $this->em->insert($table . '_id', $data);
             if ($debug->error !== null) {
                 throw new \RuntimeException('Something went wrong!');
@@ -218,6 +224,7 @@ class CouchbaseORM extends Functions
     {
         $context = new SerializationContext();
         $context->setSerializeNull(true);
+        $context->addExclusionStrategy($this->exclusionStrategy);
 
         return $context;
     }

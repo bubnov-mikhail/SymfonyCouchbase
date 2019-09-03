@@ -1,10 +1,21 @@
 services:
-    couchbase_cluster:
+    fredpalas.couchbase_bundle.exclusion_sequence:
+        class: PhpCollection\Sequence
+        public: false
+
+    fredpalas.couchbase_bundle.exclusion_strategy:
+        class: JMS\Serializer\Exclusion\DisjunctExclusionStrategy
+        public: false
+        arguments:
+            - "@fredpalas.couchbase_bundle.exclusion_sequence"
+
+    fredpalas.couchbase_bundle.couchbase_cluster:
         class: CouchbaseCluster
+        public: false
         arguments:
             - '%couchbase_bundle.url%'
 
-    couchbase_generate_views_command:
+    fredpalas.couchbase_bundle.generate_views_command:
         class: Apperturedev\CouchbaseBundle\Command\CouchbaseGenerateViewsCommand
         arguments:
             - '@doctrine'
@@ -15,7 +26,9 @@ services:
     couchbase:
         class: Apperturedev\CouchbaseBundle\Classes\CouchbaseORM
         arguments:
-            - "@couchbase_cluster"
+            - "@fredpalas.couchbase_bundle.couchbase_cluster"
             - "@doctrine.orm.entity_manager"
             - "@jms_serializer"
+            - "@fredpalas.couchbase_bundle.exclusion_strategy"
+            - 'default'
             - '%couchbase_bundle.buckets%'
