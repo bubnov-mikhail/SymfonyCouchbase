@@ -94,7 +94,7 @@ class CouchbaseManager extends Functions
      * @param \CouchbaseViewQuery $query
      * @param string $format object, array or value
      *
-     * @return Object|Object[]
+     * @return Object|Object[]|null
      */
     public function execute(CouchbaseViewQuery $query, $format = 'object')
     {
