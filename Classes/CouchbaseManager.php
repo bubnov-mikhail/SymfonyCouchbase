@@ -71,19 +71,16 @@ class CouchbaseManager extends Functions
     }
 
     /**
-
-     * Get view data.
-     *
+     * get ViewQuery
      *
      * @param string $field the view name or Object Propierty
      *
      * @return ViewQuery
      */
-    public function get($field)
+    public function getQuery($field)
     {
         $table = $this->doctrine->getClassMetadata(get_class($this->entity))->getTableName();
         $query = CouchbaseViewQuery::from($table, $field);
-        $query->stale(1);
 
         return $query;
     }
