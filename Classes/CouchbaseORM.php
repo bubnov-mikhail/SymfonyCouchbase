@@ -103,10 +103,24 @@ class CouchbaseORM extends Functions
         $data['doctype'] = $table;
         $debug           = $this->em->upsert($name, $data);
         if (null === $debug->error) {
+            $this->addPrimaryIndex();
+
             return $debug;
         }
 
         throw new \RuntimeException('Something went wrong!');
+    }
+
+    private function addPrimaryIndex()
+    {
+        $indexes = $this->em->manager()->listN1qlIndexes();
+        foreach ($indexes as $index) {
+            if ($index->isPrimary) {
+                return;
+            }
+        }
+
+        $this->em->manager()->createN1qlPrimaryIndex('', false, false);
     }
 
     /**
