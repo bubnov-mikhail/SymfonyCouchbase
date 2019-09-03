@@ -42,7 +42,7 @@ class CouchbaseGenerateViewsCommand extends Command
             ->setDescription(
                 'Generate views for the entity. To set a Custom View, create a Method getCustomView in your entity'
             )
-            ->addArgument('class', InputArgument::OPTIONAL, 'Fully qualified class name of the entity')
+            ->addArgument('class', InputArgument::OPTIONAL, 'Alias qualified class name of the entity. Example: App:User')
         ;
     }
 
@@ -62,7 +62,7 @@ class CouchbaseGenerateViewsCommand extends Command
         if (method_exists($class, 'getCustomView')) {
             $customViews = $class->getCustomView();
         } else {
-            $output->writeln('For set Custom View create a Method call getCustomView');
+            $output->writeln('To set a Custom View, create a method getCustomView() in your entity.');
         }
         $view = ['views' => []];
         foreach ($values as $value) {
