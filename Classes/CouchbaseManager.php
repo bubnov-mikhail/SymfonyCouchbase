@@ -32,7 +32,7 @@ class CouchbaseManager extends Functions
      * @param Serializer      $serializer [description]
      */
     public function __construct(
-    $entity, CouchbaseBucket $em, EntityManager $doctrine, Serializer $serializer
+        $entity, CouchbaseBucket $em, EntityManager $doctrine, Serializer $serializer
     )
     {
         $this->em         = $em;
@@ -103,7 +103,7 @@ class CouchbaseManager extends Functions
      */
     public function execute(CouchbaseViewQuery $query, $format = 'object')
     {
-        $res = $this->em->query($query, null, true);
+        $res = $this->em->query($query, true);
 
         if (is_object($res)) {
             $res = $this->classToArray($res);
@@ -144,7 +144,7 @@ class CouchbaseManager extends Functions
     {
         $sql = CouchbaseN1qlQuery::fromString($query);
 
-        return $result = $this->em->query($sql);
+        return $result = $this->em->query($sql, true);
     }
 
     /**
