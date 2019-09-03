@@ -9,182 +9,248 @@
 namespace Apperturedev\CouchbaseBundle\Classes;
 
 
+use JMS\Serializer\SerializationContext;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
-use JMS\Serializer\SerializationContext;
+use Symfony\Component\Serializer\Serializer;
 
 /**
  * Usefull Functions
  *
  * @author adrian
  */
-class Functions {
-    
+class Functions
+{
+    /**
+     * @var string
+     */
     private $name;
+
+    /**
+     * @var function
+     */
     private $_prototype;
+
+    /**
+     * @var Serializer
+     */
     private $serializer;
+
+    /**
+     * @var SerializationContext
+     */
     private $context;
-   
+
     /**
      * Seting outside serializer
-     * @param type $serializer
+     *
+     * @param Serializer $serializer
+     *
      * @return boolean
      */
-    public function setSerializer($serializer){
+    public function setSerializer($serializer)
+    {
         $this->serializer = $serializer;
-        $context = new SerializationContext();
-        $this->context=$context->setSerializeNull(true);
+        $context          = new SerializationContext();
+        $this->context    = $context->setSerializeNull(true);
+
         return true;
     }
-    
 
 
-     /**
+    /**
      * Transform object to Json.
      *
      * Will return one object to json
      *
      *     $this->toJson($class);
      *
-     * @param class          $class  A object Class
+     * @param Object $class
      *
-     * @return Json String
+     * @return string
      */
-    public function toJSon($class){        
-    $encoders = array( new JsonEncoder());
-    $normalizers = array(new ObjectNormalizer());
-    $serializer = new Serializer($normalizers, $encoders);
-    $jsonContent = $serializer->serialize($class, 'json');
-    return $jsonContent;
+    public function toJSon($class)
+    {
+        $encoders    = [new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer  = new Serializer($normalizers, $encoders);
+
+        return $serializer->serialize($class, 'json');
     }
+
     /**
      * object to array, witout JMS serializer
-     * @param type $class
-     * @return type
+     *
+     * @param Object $class
+     *
+     * @return array
      */
-    public function onArray($class){
-        
+    public function onArray($class)
+    {
+
         $reflection = new \ReflectionObject($class);
-        foreach ($reflection->getProperties() as $property){
-                        // Override visibility
+        foreach ($reflection->getProperties() as $property) {
+            // Override visibility
             if (!$property->isPublic()) {
                 $property->setAccessible(true);
             }
             $array[$property->name] = $property->getValue($class);
         }
+
         return $array;
     }
-    
+
     /**
-     * Symfony standart normalizer object to array
-     * @param type $class
-     * @return type
+     * Symfony standard normalizer object to array
+     *
+     * @param Object $class
+     *
+     * @return string
      */
-    public function objecttoArray($class){
+    public function objecttoArray($class)
+    {
         $normalizers = new PropertyNormalizer();
+
         return $normalizers->normalize($class);
     }
 
 
     /**
      * Improved symfony normalizer
-     * @param type $class
-     * @return type
+     *
+     * @param Object $class
+     *
+     * @return array
      */
-    public function toArray($class){
+    public function toArray($class)
+    {
         $json = $this->onArray($class);
+
         return $json;
     }
-    
+
     /**
      * Convert an array to Entity object transforming to json and json to object
-     * @param type $array
-     * @param type $class
+     *
+     * @param array  $array
+     * @param Object $class
      */
-    public function toObject($array,&$class){
-        $encoders = array(new XmlEncoder(), new JsonEncoder());
-        $normalizers = array(new ObjectNormalizer());
-        $serializer = new Serializer($normalizers, $encoders);
-        $class = $serializer->deserialize(json_encode($array), get_class($class), 'json');
+    public function toObject($array, &$class)
+    {
+        $encoders    = [new XmlEncoder(), new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer  = new Serializer($normalizers, $encoders);
+        $class       = $serializer->deserialize(json_encode($array), get_class($class), 'json');
     }
+
     /**
      * Convert a Json Sring in a Entity Object
+     *
      * @param type $json
      * @param type $class
      */
-    public function JsontoObjectold($json,&$class){
-        $encoders = array(new XmlEncoder(), new JsonEncoder());
-        $normalizers = array(new ObjectNormalizer());
-        $serializer = new Serializer($normalizers, $encoders);
-        $class = $serializer->deserialize($json, get_class($class), 'json');
+    public function JsontoObjectold($json, &$class)
+    {
+        $encoders    = [new XmlEncoder(), new JsonEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+        $serializer  = new Serializer($normalizers, $encoders);
+        $class       = $serializer->deserialize($json, get_class($class), 'json');
     }
-    
+
     /**
      * JMS Serializer Json string to Entity Object
+     *
      * @param type $json
      * @param type $class
+     *
      * @return boolean
      */
-    public function JsontoObject($json,&$class){
-        $class=$this->serializer->deserialize($json,get_class($class),'json',  $this->context);
+    public function JsontoObject($json, &$class)
+    {
+        $class = $this->serializer->deserialize($json, get_class($class), 'json', $this->context);
+
         return true;
     }
-    
+
     /**
      * Set the id of private id from Array
-     * @param type $array
-     * @param type $class
+     *
+     * @param array  $array
+     * @param Object $class
+     *
+     * @throws \ReflectionException
      */
-    public function getObject($array,&$class){
+    public function getObject($array, &$class)
+    {
         $this->name = get_class($class);
-        $entity = $this->newInstance();
+        $entity     = $this->newInstance();
         $this->toObject($array, $entity);
         $reflection = new \ReflectionObject($entity);
-        $property = $reflection->getProperty('id');
+        $property   = $reflection->getProperty('id');
         $property->setAccessible(true);
         $property->setValue($entity, $array['id']);
         $class = $entity;
     }
-    
-    
+
+    /**
+     * @return function|mixed
+     */
     private function newInstance()
     {
         if ($this->_prototype === null) {
-            $this->_prototype = unserialize(sprintf('O:%d:"%s":0:{}', strlen($this->name), $this->name));
+            $this->_prototype = unserialize(
+                sprintf('O:%d:"%s":0:{}', strlen($this->name), $this->name)
+            );
         }
+
         return clone $this->_prototype;
     }
+
     /**
      * Json String to Array
-     * @param type $json
-     * @return type
+     *
+     * @param string $json
+     *
+     * @return array
      */
-    public function JsonToArray($json){
-        $json = json_decode($json);
-        $result = array();
-        foreach ($json as $key=>$value){
-            $result[$key]=$value;
+    public function JsonToArray($json)
+    {
+        $json   = json_decode($json);
+        $result = [];
+        foreach ($json as $key => $value) {
+            $result[$key] = $value;
         }
+
         return $result;
     }
+
     /**
      * Json Object to Array
-     * @param type $json
-     * @return type
+     *
+     * @param string $json
+     *
+     * @return array
      */
-    public function JsonObjectToArray($json){
-        $result = array();
-        foreach ($json as $key=>$value){
-            $result[$key]=$value;
+    public function JsonObjectToArray($json)
+    {
+        $result = [];
+        foreach ($json as $key => $value) {
+            $result[$key] = $value;
         }
+
         return $result;
     }
+
+    /**
+     * @param Object $data
+     *
+     * @return Object
+     */
     public function classToArray($data)
     {
-        return json_decode(json_encode($data),true);
+        return json_decode(json_encode($data), true);
     }
 }
