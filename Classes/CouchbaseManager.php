@@ -1,12 +1,8 @@
 <?php
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 namespace Apperturedev\CouchbaseBundle\Classes;
 
+use Couchbase\ViewQuery;
 use JMS\Serializer\Serializer;
 use Doctrine\ORM\EntityManager;
 use CouchbaseBucket;
@@ -25,11 +21,10 @@ class CouchbaseManager extends Functions
     private $serializer;
 
     /**
-     * [__construct description]
-     * @param [Object]          $entity     [description]
-     * @param CouchbaseBucket $em         [description]
-     * @param EntityManager   $doctrine   [description]
-     * @param Serializer      $serializer [description]
+     * @param [Object]        $entity
+     * @param CouchbaseBucket $em
+     * @param EntityManager   $doctrine
+     * @param Serializer      $serializer
      */
     public function __construct(
         $entity, CouchbaseBucket $em, EntityManager $doctrine, Serializer $serializer
@@ -53,7 +48,7 @@ class CouchbaseManager extends Functions
      */
     public function getById($id, $format = 'object')
     {
-        $id    = intval($id);
+        $id    = (int)$id;
         $table = $this->doctrine->getClassMetadata(get_class($this->entity))->getTableName();
         $res   = $this->classToArray($this->em->get($table.'_'.$id)->value);
 
@@ -65,7 +60,7 @@ class CouchbaseManager extends Functions
      *
      * @param string $format the expected, object, array or value
      *
-     * @return type
+     * @return Object|Object[]
      */
     public function getAll($format = 'object')
     {
@@ -82,7 +77,7 @@ class CouchbaseManager extends Functions
      *
      * @param string $field the view name or Object Propierty
      *
-     * @return \_CouchbaseDefaultViewQuery
+     * @return ViewQuery
      */
     public function get($field)
     {
@@ -99,17 +94,18 @@ class CouchbaseManager extends Functions
      * @param \CouchbaseViewQuery $query
      * @param string $format object, array or value
      *
-     * @return Object
+     * @return Object|Object[]
      */
     public function execute(CouchbaseViewQuery $query, $format = 'object')
     {
+        $entities = [];
         $res = $this->em->query($query, true);
 
         if (is_object($res)) {
             $res = $this->classToArray($res);
         }
 
-        if ($res['total_rows'] == 0 and count($res['rows']) == 0) {
+        if ($res['total_rows'] === 0 && count($res['rows']) === 0) {
             return null;
         }
 
@@ -119,38 +115,38 @@ class CouchbaseManager extends Functions
             }
             switch ($format) {
                 case 'object':
-                    $entidad[] = $this->entity;
+                    $entities[] = $this->entity;
                     break;
                 case 'array':
-                    $entidad[] = $this->serializer->toArray($this->entity);
+                    $entities[] = $this->serializer->toArray($this->entity);
                     break;
                 case 'value':
-                    $entidad[] = $value['value'];
+                    $entities[] = $value['value'];
                     break;
             }
         }
 
-        return (count($entidad) == 1) ? $entidad[0] : $entidad;
+        return (count($entities) === 1) ? $entities[0] : $entities;
     }
 
     /**
      * Execute N1QL query.
      *
-     * @param type $query
+     * @param ViewQuery $query
      *
-     * @return type
+     * @return Object|Object[]
      */
     public function query($query)
     {
         $sql = CouchbaseN1qlQuery::fromString($query);
 
-        return $result = $this->em->query($sql, true);
+        return $this->em->query($sql, true);
     }
 
     /**
      * Truncate All documents of a Entity.
      *
-     * @return type
+     * @return array
      */
     public function truncateDocumemts()
     {
@@ -162,18 +158,18 @@ class CouchbaseManager extends Functions
             }
             $this->em->remove($name.'_id');
 
-            return array('Success' => true);
+            return ['Success' => true];
         } else {
-            return array('Success' => true, 'msg' => 'Not Registers');
+            return ['Success' => true, 'msg' => 'Not Registers'];
         }
     }
 
     /**
      * Del a document by id.
      *
-     * @param type $id
+     * @param $id
      *
-     * @return type
+     * @return array
      */
     public function delDocumemt($id)
     {
@@ -181,9 +177,9 @@ class CouchbaseManager extends Functions
         try {
             $this->em->remove($name.'_'.$id);
         } catch (\Exception $e) {
-            return array('Success' => true, 'msg' => 'Not Register');
+            return ['Success' => true, 'msg' => 'Not Register'];
         }
 
-        return array('Success' => true);
+        return ['Success' => true];
     }
 }
