@@ -80,20 +80,20 @@ class CouchbaseORM extends Functions
      * Save the entity Object on Couchbase
      * If id is null create a new one and add automatically to the Entity Object.
      *
-     * @param string $class
+     * @param Object $object
      *
      * @return \Couchbase\Document|array
      *
      * @throws \Exception
      */
-    public function save($class)
+    public function save($object)
     {
-        $table = $this->doctrine->getClassMetadata(get_class($class))->getTableName();
-        if (null === $class->getId()) {
-            $this->setObjectId($class, $this->setNextId($class));
+        $table = $this->doctrine->getClassMetadata(get_class($object))->getTableName();
+        if (null === $object->getId()) {
+            $this->setObjectId($object, $this->setNextId($object));
         }
-        $name            = $table . '_' . $class->getId();
-        $data            = $this->serializer->toArray($class, $this->getContext());
+        $name            = $table . '_' . $object->getId();
+        $data            = $this->serializer->toArray($object, $this->getContext());
         $data['doctype'] = $table;
         $debug           = $this->em->upsert($name, $data);
         if (null === $debug->error) {
