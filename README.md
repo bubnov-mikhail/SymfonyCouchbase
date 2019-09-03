@@ -22,17 +22,32 @@ public function registerBundles()
 }
 ```
 
+For Symfony 4 or higher add this line to the `config/bundles.php`: 
+```php
+Apperturedev\CouchbaseBundle\CouchbaseBundle::class => ['all' => true],
+```
+
 ```yml
 # app/config/config.yml
 couchbase:
     url: <couchbase.url>
     buckets:
         default: #dafult bucket
-            bucket_name: <bucket name>         
+            bucket_name: <bucket name>  
+            bucket_password: <bucket password>       
 ```
+
+For Symfony 4 or higher put this config in the `config/packages/couchbase.yaml`
+
+## Exclusion Strategy
+
+You may add exclusion strategies by adding the tag "fredpalas.couchbase_bundle.exclusion_strategy" to a service.  
+The service mast implement `\JMS\Serializer\Exclusion\ExclusionStrategyInterface`
+
 ## Requirements
 
-[JMS Serializer](https://github.com/schmittjoh/JMSSerializerBundle)
+* [JMS Serializer](https://github.com/schmittjoh/JMSSerializerBundle)  
+* [ext-couchbase](https://docs.couchbase.com/php-sdk/2.6/start-using-sdk.html) (1.0 or higher)
 
 
 ## Documentation
