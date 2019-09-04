@@ -23,6 +23,13 @@ services:
         tags:
             - {name: console.command}
 
+    fredpalas.couchbase_bundle.generate_index_command:
+        class: Apperturedev\CouchbaseBundle\Command\CouchbaseGenerateIndexCommand
+        arguments:
+            - '@couchbase'
+        tags:
+            - {name: console.command}
+
     couchbase:
         class: Apperturedev\CouchbaseBundle\Classes\CouchbaseORM
         arguments:
