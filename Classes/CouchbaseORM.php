@@ -111,7 +111,7 @@ class CouchbaseORM extends Functions
         throw new \RuntimeException('Something went wrong!');
     }
 
-    private function addPrimaryIndex()
+    public function addPrimaryIndex()
     {
         $indexes = $this->em->manager()->listN1qlIndexes();
         foreach ($indexes as $index) {
