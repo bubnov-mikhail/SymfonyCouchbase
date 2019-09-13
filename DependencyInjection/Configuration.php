@@ -22,6 +22,8 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->variableNode('url')->defaultValue('localhost')->end()
+                ->variableNode('user')->defaultValue('')->end()
+                ->variableNode('password')->defaultValue('')->end()
                 ->arrayNode('buckets')
                     ->useAttributeAsKey('name')
                         ->prototype('array')

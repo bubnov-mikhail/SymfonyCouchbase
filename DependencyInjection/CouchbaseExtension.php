@@ -23,6 +23,8 @@ class CouchbaseExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('couchbase_bundle.url', $config['url']);
+        $container->setParameter('couchbase_bundle.user', $config['user']);
+        $container->setParameter('couchbase_bundle.password', $config['password']);
         $container->setParameter('couchbase_bundle.buckets', $config['buckets']);
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
