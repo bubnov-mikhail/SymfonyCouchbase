@@ -55,7 +55,10 @@ class CouchbaseORM extends Functions
     {
         $bucket           = $buckets[$bucketName]['bucket_name'] ?? null;
         $bucketPassword   = $buckets[$bucketName]['bucket_password'] ?? '';
-        $this->em         = $em->openBucket($bucket, $bucketPassword);
+        $this->em         = $bucketPassword
+            ? $em->openBucket($bucket, $bucketPassword)
+            : $em->openBucket($bucket)
+        ;
         $this->doctrine   = $doctrine;
         $this->serializer = $serializer;
         $this->setSerializer($serializer);
