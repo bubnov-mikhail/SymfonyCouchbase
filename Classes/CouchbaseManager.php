@@ -18,16 +18,15 @@ class CouchbaseManager extends Functions
     /**
      * @var string
      */
-    const SELECT_ALL_QUERY = 'SELECT %table%.* FROM %bucket% %table% WHERE %table%.doctype = "%table%"';
+    const SELECT_ALL_QUERY = 'SELECT %table%.* FROM `%bucket%` %table% WHERE %table%.doctype = "%table%"';
 
     /**
      * @var string
      */
-    const SELECT_BY_QUERY = 'SELECT %table%.* FROM %bucket% %table% WHERE %table%.doctype = "%table%" AND %field% = %value%';
+    const SELECT_BY_QUERY = 'SELECT %table%.* FROM `%bucket%` %table% WHERE %table%.doctype = "%table%" AND %field% = %value%';
 
     private $entity;
     private $em;
-    private $doctrine;
     private $serializer;
     private $table;
 
