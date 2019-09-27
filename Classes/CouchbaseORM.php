@@ -198,7 +198,7 @@ class CouchbaseORM extends Functions
             $getDoc = $this->em->get($table . '_id');
             $id     = $getDoc->value->id;
         } catch (\Exception $e) {
-            return $this->setId($class);
+            $id = $this->setId($class);
         }
 
         $debug = $this->em->replace($table . '_id', ['id' => $id + 1]);
