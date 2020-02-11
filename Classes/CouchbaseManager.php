@@ -7,6 +7,7 @@ use CouchbaseBucket;
 use CouchbaseN1qlQuery;
 use Doctrine\ORM\EntityManager;
 use JMS\Serializer\Serializer;
+use Doctrine\ORM\QueryBuilder;
 
 /**
  * CouchbaseManager ORM entity manager.
@@ -15,20 +16,11 @@ use JMS\Serializer\Serializer;
  */
 class CouchbaseManager extends Functions
 {
-    /**
-     * @var string
-     */
-    const SELECT_ALL_QUERY = 'SELECT %table%.* FROM `%bucket%` %table% WHERE %table%.doctype = "%table%"';
-
-    /**
-     * @var string
-     */
-    const SELECT_BY_QUERY = 'SELECT %table%.* FROM `%bucket%` %table% WHERE %table%.doctype = "%table%" AND %field% = %value%';
-
     private $entity;
     private $em;
     private $serializer;
     private $table;
+    private $doctrine;
 
     /**
      * @param [Object]        $entity
@@ -46,11 +38,24 @@ class CouchbaseManager extends Functions
         $this->em         = $em;
         $this->entity     = new $entity();
         $this->serializer = $serializer;
+        $this->doctrine   = $doctrine;
         $this->table      = $doctrine
             ->getClassMetadata(get_class($this->entity))
             ->getTableName()
         ;
         $this->setSerializer($serializer);
+    }
+
+    /**
+     * @return QueryBuilder
+     */
+    public function getQueryBuilder() {
+        return $this->doctrine
+            ->createQueryBuilder()
+            ->select($this->table)
+            ->from('`' . $this->em->getName() .'`', $this->table)
+            ->where($this->table.'.doctype = $doctype')
+        ;
     }
 
     /**
@@ -62,12 +67,14 @@ class CouchbaseManager extends Functions
      *
      * @return Object
      */
-    public function getById($id, $format = 'object')
+    public function findById($id, $format = 'object')
     {
-        $id  = (int)$id;
-        $res = $this->classToArray($this->em->get($this->table . '_' . $id)->value);
+        $qb = $this->getQueryBuilder();
+        $qb->andWhere($this->table.'.id = $id');
 
-        return $this->serializer->fromArray($res, get_class($this->entity));
+        $result = $this->executeQueryBuilder($qb, ['id' => (int)$id]);
+
+        return $result[0] ?? null;
     }
 
     /**
@@ -75,12 +82,11 @@ class CouchbaseManager extends Functions
      *
      * @return Object|Object[]
      */
-    public function getAll()
+    public function findAll()
     {
-        $query  = $this->getQuery(self::SELECT_ALL_QUERY);
-        $result = $this->execute($query);
+        $qb = $this->getQueryBuilder();
 
-        return $result;
+        return $this->executeQueryBuilder($qb);
     }
 
     /**
@@ -88,10 +94,13 @@ class CouchbaseManager extends Functions
      *
      * @return Object|Object[]
      */
-    public function getBy($field, $value)
+    public function findBy(array $criterias)
     {
-        $query  = $this->getQuery(self::SELECT_BY_QUERY, ['%field%', '%value%'], [$field, $value]);
-        $result = $this->execute($query);
+        $qb = $this->getQueryBuilder();
+        foreach ($criterias as $field => $value) {
+            $qb->andWhere($this->table.'.' . $field . ' = $' . $field);
+        }
+        $result = $this->executeQueryBuilder($qb, $criterias);
 
         return $result;
     }
@@ -112,26 +121,6 @@ class CouchbaseManager extends Functions
         }
 
         return ['Success' => true];
-    }
-
-    /**
-     * @param string $sqlTemplate
-     * @param array  $params
-     * @param array  $values
-     *
-     * @return N1qlQuery
-     */
-    private function getQuery($sqlTemplate, $params = [], $values = [])
-    {
-        $search  = array_merge(['%table%', '%bucket%'], $params);
-        $replace = array_merge([$this->table, $this->em->getName()], $values);
-        $sql     = str_replace(
-            $search,
-            $replace,
-            $sqlTemplate
-        );
-
-        return CouchbaseN1qlQuery::fromString($sql);
     }
 
     /**
@@ -156,7 +145,7 @@ class CouchbaseManager extends Functions
         }
 
         foreach ($res['rows'] as $value) {
-            $entities[] = $this->hydrateResult($value, $format);
+            $entities[] = $this->hydrateResult($value[$this->table], $format);
         }
 
         return $entities;
@@ -184,5 +173,20 @@ class CouchbaseManager extends Functions
                 return $this->serializer->toArray($entity);
                 break;
         }
+    }
+
+    /**
+     * @param QueryBuilder $qb
+     * @param array        $params
+     *
+     * @return Object|Object[]
+     */
+    private function executeQueryBuilder(QueryBuilder $qb, $params = [])
+    {
+        $query = $qb->getDql();
+        $query = N1QLQuery::fromString($qb->getDql());
+        $query->namedParams(array_merge(['doctype' => $this->table], $params));
+
+        return $this->execute($query);
     }
 }
